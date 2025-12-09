@@ -93,14 +93,23 @@ premium_css = """
 st.markdown(premium_css, unsafe_allow_html=True)
 
 
+
 # --- SÉCURITÉ ---
 SECRET_TOKEN = "AZERTY_SUPER_SECRET_123"
 query_params = st.query_params
 user_token = query_params.get("token", "")
 
 if user_token != SECRET_TOKEN:
-    st.error("⛔ Session invalide.")
-    st.markdown("""<a href="https://gen-lang-client-0236145808.web.app" target="_parent" style="display: block; text-align: center; background: #dc3545; color: white; padding: 10px; border-radius: 5px; text-decoration: none;">Se reconnecter</a>""", unsafe_allow_html=True)
+    st.error("⛔ Session expirée ou invalide.")
+    st.info("Vous devez passer par le portail de connexion pour accéder à l'outil.")
+    
+    # ON REVIENT AU BOUTON OFFICIEL (Plus fiable)
+    st.link_button(
+        "🔐 Se reconnecter au Portail", 
+        "https://gen-lang-client-0236145808.web.app", 
+        type="primary", 
+        use_container_width=True
+    )
     st.stop()
 
 
@@ -176,3 +185,4 @@ if st.button("✨ GÉNÉRER LA RÉPONSE"):
                 
         except Exception as e:
             st.error(f"Erreur : {e}")
+
