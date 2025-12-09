@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 🎨 CSS PREMIUM & NETTOYAGE ---
+# --- 🎨 CSS PREMIUM & CORRECTION COULEURS ---
 premium_css = """
 <style>
     /* 1. LE FOND GLOBAL */
@@ -30,41 +30,53 @@ premium_css = """
         border: 1px solid rgba(255,255,255,0.2);
     }
 
-    /* 3. NETTOYAGE TOTAL (Adieu Streamlit branding) */
-    #MainMenu {visibility: hidden;} /* Cache le menu 3 points */
-    footer {visibility: hidden;} /* Cache "Built with Streamlit" */
-    header {visibility: hidden;} /* Cache la barre colorée en haut */
-    [data-testid="stToolbar"] {visibility: hidden !important;} /* Cache les outils dev */
-    .stDeployButton {display:none;} /* Cache le bouton deploy */
+    /* 3. NETTOYAGE TOTAL */
+    #MainMenu {visibility: hidden;} 
+    header {visibility: hidden;} 
+    [data-testid="stToolbar"] {visibility: hidden !important;} 
+    .stDeployButton {display:none;}
+    footer {visibility: hidden !important; display: none !important; height: 0px !important;}
+    [data-testid="stFooter"] {display: none !important;}
 
     /* 4. TYPOGRAPHIE & STYLE */
     h1 {
-        color: #333 !important;
+        color: #222 !important;
         font-weight: 800 !important;
-        text-align: center;
-        font-size: 2.5rem !important;
-        margin-bottom: 0.5rem !important;
+        text-align: left !important;
+        font-size: 3rem !important;
+        margin-bottom: 0rem !important;
+        margin-top: 0rem !important;
+        letter-spacing: -1px;
     }
     
-    /* 5. CUSTOMISATION DES INPUTS */
+    /* 5. CUSTOMISATION DES INPUTS (LA CORRECTION EST ICI 👇) */
     .stTextArea textarea {
         border-radius: 12px !important;
-        border: 1px solid #eee !important;
-        background-color: #f8f9fa !important;
+        border: 1px solid #e0e0e0 !important;
+        background-color: #f8f9fa !important; /* Fond gris très clair */
         padding: 15px !important;
         font-size: 16px !important;
+        
+        /* FORCE LE TEXTE EN NOIR */
+        color: #000000 !important; 
+        -webkit-text-fill-color: #000000 !important; /* Vital pour Chrome/Safari */
+        caret-color: #000000 !important; /* Le curseur qui clignote devient noir */
     }
+    
     .stTextArea textarea:focus {
         border-color: #667eea !important;
         box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2) !important;
+        background-color: #ffffff !important; /* Devient blanc pur quand on clique */
     }
 
-    /* 6. STYLE DES BOUTONS RADIO (Plus jolis) */
+    /* 6. STYLE DES BOUTONS RADIO */
     .stRadio > div {
-        background-color: #f8f9fa;
-        padding: 10px;
-        border-radius: 12px;
-        border: 1px solid #eee;
+        background-color: #fff;
+        padding: 0px;
+        color: #000 !important; /* Force le texte des options en noir */
+    }
+    .stRadio label {
+        color: #333 !important; /* Texte des labels en gris foncé */
     }
 
     /* 7. LE BOUTON D'ACTION */
@@ -93,17 +105,14 @@ premium_css = """
 st.markdown(premium_css, unsafe_allow_html=True)
 
 
-
 # --- SÉCURITÉ ---
 SECRET_TOKEN = "AZERTY_SUPER_SECRET_123"
 query_params = st.query_params
 user_token = query_params.get("token", "")
 
 if user_token != SECRET_TOKEN:
-    st.error("⛔ Session expirée ou invalide.")
-    st.info("Vous devez passer par le portail de connexion pour accéder à l'outil.")
-    
-    # ON REVIENT AU BOUTON OFFICIEL (Plus fiable)
+    st.error("⛔ Session expirée.")
+    st.info("Veuillez vous reconnecter via le portail principal.")
     st.link_button(
         "🔐 Se reconnecter au Portail", 
         "https://gen-lang-client-0236145808.web.app", 
@@ -126,22 +135,29 @@ except Exception:
 
 # --- INTERFACE ---
 
-# En-tête simplifié et centré
-st.markdown("<h1>💎 NEXA</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #888; margin-bottom: 30px;'>Intelligence Artificielle de Réputation</p>", unsafe_allow_html=True)
+# 1. EN-TÊTE PRO
+st.markdown("<h1>NEXA</h1>", unsafe_allow_html=True)
+st.markdown(
+    """
+    <p style='text-align: left; color: #000000; font-size: 1.3rem; font-weight: 500; margin-bottom: 35px; margin-top: 5px;'>
+    Solution Intelligente de Gestion des Avis Google
+    </p>
+    """, 
+    unsafe_allow_html=True
+)
 
-# Zone de l'avis (Plus grande pour combler le vide)
+# 2. ZONE DE TRAVAIL
 st.markdown("### 1️⃣ L'avis à traiter")
 avis_client = st.text_area(
     label="Avis",
-    label_visibility="collapsed", # On cache le label standard pour faire plus propre
-    height=180, # Plus haut pour remplir l'espace
+    label_visibility="collapsed", 
+    height=180, 
     placeholder="Copiez-collez l'avis du client ici..."
 )
 
-st.write("") # Espaceur
+st.write("") 
 
-# Options en 2 colonnes
+# 3. OPTIONS
 col1, col2 = st.columns(2)
 
 with col1:
@@ -154,7 +170,6 @@ with col1:
 
 with col2:
     st.markdown("### 📏 Longueur")
-    # Changement ici : Radio horizontal au lieu de Selectbox
     taille = st.radio(
         "Longueur",
         ["Courte", "Moyenne", "Détaillée"],
@@ -162,7 +177,7 @@ with col2:
         label_visibility="collapsed"
     )
 
-# Bouton d'action
+# 4. ACTION
 if st.button("✨ GÉNÉRER LA RÉPONSE"):
     if not avis_client:
         st.warning("⚠️ L'avis est vide.")
@@ -185,4 +200,3 @@ if st.button("✨ GÉNÉRER LA RÉPONSE"):
                 
         except Exception as e:
             st.error(f"Erreur : {e}")
-
