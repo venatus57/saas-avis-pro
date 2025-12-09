@@ -51,14 +51,3 @@ if st.button("✨ GÉNÉRER LA RÉPONSE", type="primary", use_container_width=Tr
                 
         except Exception as e:
             st.error(f"Erreur : {e}")
-```
-
-### Étape 3 : Enregistre
-1. En bas, écris : **"Fix syntax error"**
-2. Clique sur **"Commit changes"**
-3. **Attends 2-3 minutes** que Streamlit redéploie
-
-### Étape 4 : Teste l'URL
-Va sur cette URL dans ton navigateur :
-```
-https://repond-avis-pro.streamlit.app/?token=AZERTY_SUPER_SECRET_123
