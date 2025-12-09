@@ -201,4 +201,5 @@ if st.button("Générer la réponse"):
                 st.text_area("Copier le texte ci-dessous :", value=response.text, height=200)
                 
         except Exception as e:
-            st.error("Erreur de service.")
+            st.error(f"Erreur technique : {e}")
+
