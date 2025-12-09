@@ -68,3 +68,5 @@ if st.button("✨ GÉNÉRER LA RÉPONSE", type="primary", use_container_width=Tr
                 
         except Exception as e:
             st.error(f"Erreur : {e}")
+
+Fix: Suppression double sécurité
