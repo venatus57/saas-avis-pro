@@ -1,58 +1,24 @@
 import streamlit as st
 import google.generativeai as genai
-import streamlit as st
-
-import streamlit as st
-
-# --- SÉCURITÉ : LE BRACELET VIP ---
-# Ce code doit être IDENTIQUE à celui dans ton fichier index.html
-SECRET_TOKEN = "AZERTY_SUPER_SECRET_123" 
-
-# On récupère les paramètres de l'URL
-query_params = st.query_params
-user_token = query_params.get("token", "")
-
-# Si le token n'est pas le bon, on bloque l'accès
-if user_token != SECRET_TOKEN:
-    st.error("⛔ Accès refusé. Vous devez passer par le portail de connexion.")
-    # Mets ici le lien de ton site Firebase
-    st.link_button("Se connecter", "https://gen-lang-client-0236145808.web.app")
-    st.stop() # Arrête le chargement de la page
-
-# --- TON CODE STREAMLIT CONTINUE EN DESSOUS ---
-# ...
-
-
 
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Repond'Avis Pro", page_icon="🔒")
 
-# --- SÉCURITÉ : LE DIGICODE ---
-def check_password():
-    """Retourne True si le mot de passe est bon."""
-    # On cherche le mot de passe dans les secrets
-    if "MOT_DE_PASSE" not in st.secrets:
-        st.error("⚠️ Erreur de configuration : Mot de passe non défini dans les secrets.")
-        return False
+# --- SÉCURITÉ UNIQUE : LE TOKEN ---
+SECRET_TOKEN = "AZERTY_SUPER_SECRET_123"
 
-    # On demande le mot de passe à l'utilisateur
-    password_input = st.sidebar.text_input("🔒 Mot de passe client :", type="password")
-    
-    if password_input == st.secrets["MOT_DE_PASSE"]:
-        return True
-    elif password_input == "":
-        st.warning("Veuillez entrer votre code d'accès personnel.")
-        return False
-    else:
-        st.error("❌ Mot de passe incorrect.")
-        return False
+# Récupération du token dans l'URL
+query_params = st.query_params
+user_token = query_params.get("token", "")
 
-# Si le mot de passe n'est pas bon, on arrête tout ici.
-if not check_password():
+# Si le token n'est pas bon, on bloque l'accès
+if user_token != SECRET_TOKEN:
+    st.error("⛔ Accès refusé. Vous devez passer par le portail de connexion.")
+    st.link_button("Se connecter", "https://gen-lang-client-0236145808.web.app")
     st.stop()
 
 # =========================================================
-# SI ON ARRIVE ICI, C'EST QUE LE CLIENT A PAYÉ ET A LE CODE
+# SI ON ARRIVE ICI, C'EST QUE LE CLIENT EST AUTHENTIFIÉ
 # =========================================================
 
 # --- CHARGEMENT CLÉ API ---
@@ -62,8 +28,8 @@ try:
     else:
         st.error("⚠️ Clé API introuvable.")
         st.stop()
-except Exception:
-    st.warning("⚠️ Erreur technique (Clé).")
+except Exception as e:
+    st.warning(f"⚠️ Erreur technique (Clé) : {e}")
     st.stop()
 
 # --- LE VRAI SITE COMMENCE ICI ---
@@ -92,7 +58,7 @@ if st.button("✨ GÉNÉRER LA RÉPONSE", type="primary", use_container_width=Tr
         st.warning("⚠️ Collez un avis d'abord !")
     else:
         try:
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            model = genai.GenerativeModel('gemini-2.0-flash-exp')
             prompt = f"Réponds à cet avis Google : '{avis_client}'. Ton: {genre}. Taille: {taille}. Pas de guillemets."
             
             with st.spinner("Rédaction..."):
@@ -102,6 +68,3 @@ if st.button("✨ GÉNÉRER LA RÉPONSE", type="primary", use_container_width=Tr
                 
         except Exception as e:
             st.error(f"Erreur : {e}")
-            
-
-
