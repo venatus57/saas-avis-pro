@@ -2,207 +2,177 @@ import streamlit as st
 import google.generativeai as genai
 import os
 
-# --- CONFIGURATION DE LA PAGE (Doit être la première commande Streamlit) ---
+# --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(
     page_title="NEXA - Reputation Intelligence",
     page_icon="💎",
-    layout="centered", # Important pour le look "carte centrale"
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- 🎨 CSS PREMIUM : C'EST ICI QUE LA MAGIE OPÈRE ---
-# On injecte du CSS pour forcer Streamlit à ressembler à notre page de login
+# --- 🎨 CSS PREMIUM & NETTOYAGE ---
 premium_css = """
 <style>
-    /* 1. LE FOND GLOBAL (Le même dégradé que le login) */
+    /* 1. LE FOND GLOBAL */
     .stApp {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    /* 2. LA "CARTE" CENTRALE */
-    /* On cible le conteneur principal de Streamlit pour en faire une carte */
+    /* 2. LA CARTE CENTRALE */
     .main .block-container {
         background-color: #ffffff;
-        padding: 3rem !important; /* Plus d'espace à l'intérieur */
-        border-radius: 20px; /* Bords très ronds */
-        box-shadow: 0 20px 40px rgba(0,0,0,0.2); /* Belle ombre portée */
-        max-width: 800px; /* Largeur max pour faire pro */
-        margin-top: 50px !important; /* Un peu d'espace en haut */
-        border: 1px solid rgba(255,255,255,0.2); /* Petit bord subtil */
+        padding: 3rem !important;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        max-width: 850px;
+        margin-top: 50px !important;
+        border: 1px solid rgba(255,255,255,0.2);
     }
 
-    /* 3. TYPOGRAPHIE & COULEURS */
+    /* 3. NETTOYAGE TOTAL (Adieu Streamlit branding) */
+    #MainMenu {visibility: hidden;} /* Cache le menu 3 points */
+    footer {visibility: hidden;} /* Cache "Built with Streamlit" */
+    header {visibility: hidden;} /* Cache la barre colorée en haut */
+    [data-testid="stToolbar"] {visibility: hidden !important;} /* Cache les outils dev */
+    .stDeployButton {display:none;} /* Cache le bouton deploy */
+
+    /* 4. TYPOGRAPHIE & STYLE */
     h1 {
         color: #333 !important;
         font-weight: 800 !important;
         text-align: center;
         font-size: 2.5rem !important;
-        margin-bottom: 1.5rem !important;
+        margin-bottom: 0.5rem !important;
     }
-    h3 {
-        color: #555 !important;
-        font-weight: 600 !important;
-    }
-    p, label, .stSelectbox label, .stRadio label {
-        color: #444 !important;
-        font-size: 1rem !important;
-    }
-
-    /* 4. CUSTOMISATION DES INPUTS (Zones de texte, menus) */
+    
+    /* 5. CUSTOMISATION DES INPUTS */
     .stTextArea textarea {
         border-radius: 12px !important;
         border: 1px solid #eee !important;
-        background-color: #f9f9f9 !important;
+        background-color: #f8f9fa !important;
         padding: 15px !important;
+        font-size: 16px !important;
     }
     .stTextArea textarea:focus {
         border-color: #667eea !important;
         box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2) !important;
     }
-    /* Les menus déroulants */
-    div[data-baseweb="select"] > div {
-        border-radius: 12px !important;
-        border: 1px solid #eee !important;
-        background-color: #f9f9f9 !important;
+
+    /* 6. STYLE DES BOUTONS RADIO (Plus jolis) */
+    .stRadio > div {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid #eee;
     }
 
-    /* 5. LE BOUTON PREMIUM (Remplacement du rouge par le dégradé) */
+    /* 7. LE BOUTON D'ACTION */
     .stButton > button {
-        width: 100%; /* Pleine largeur */
+        width: 100%;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
         color: white !important;
         border: none !important;
         border-radius: 12px !important;
-        padding: 15px 25px !important;
-        font-size: 1.1rem !important;
+        padding: 18px 25px !important;
+        font-size: 1.2rem !important;
         font-weight: bold !important;
         text-transform: uppercase;
         letter-spacing: 1px;
         transition: all 0.3s ease !important;
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4) !important;
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3) !important;
+        margin-top: 20px;
     }
-    /* Effet au survol du bouton */
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6) !important;
+        box-shadow: 0 15px 30px rgba(102, 126, 234, 0.5) !important;
     }
-    .stButton > button:active {
-        transform: translateY(1px);
-    }
-
-    /* Cacher des éléments parasites de Streamlit */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-
-    /* Petits ajustements d'espacement */
-    .st-emotion-cache-16txtl3 { padding-top: 1rem; } /* Espace avant les colonnes */
-    hr { margin: 2rem 0; border-color: #eee; }
 
 </style>
 """
-# Injection du CSS
 st.markdown(premium_css, unsafe_allow_html=True)
 
 
-# --- SÉCURITÉ (LE BRACELET VIP) ---
+# --- SÉCURITÉ ---
 SECRET_TOKEN = "AZERTY_SUPER_SECRET_123"
 query_params = st.query_params
 user_token = query_params.get("token", "")
 
 if user_token != SECRET_TOKEN:
-    # On stylise même le message d'erreur pour qu'il soit propre
-    st.error("⛔ Accès refusé. Session expirée ou invalide.")
-    # Le lien de redirection vers ton site Firebase
-    st.markdown(
-        """<a href="https://gen-lang-client-0236145808.web.app" target="_parent" 
-        style="display: block; text-align: center; background: #dc3545; color: white; 
-        padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 20px;">
-        Se reconnecter au portail NEXA</a>""", 
-        unsafe_allow_html=True
-    )
+    st.error("⛔ Session invalide.")
+    st.markdown("""<a href="https://gen-lang-client-0236145808.web.app" target="_parent" style="display: block; text-align: center; background: #dc3545; color: white; padding: 10px; border-radius: 5px; text-decoration: none;">Se reconnecter</a>""", unsafe_allow_html=True)
     st.stop()
 
 
-# --- CONFIGURATION IA ---
+# --- CONFIG IA ---
 try:
     if "GOOGLE_API_KEY" in st.secrets:
         genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
     else:
-        st.error("⚠️ Clé API Google introuvable.")
+        st.error("⚠️ Clé API manquante.")
         st.stop()
-except Exception as e:
-    st.warning(f"⚠️ Erreur de configuration IA : {e}")
+except Exception:
     st.stop()
 
 
-# --- L'INTERFACE UTILISATEUR (Dans la carte blanche) ---
+# --- INTERFACE ---
 
-# Titre Principal avec le nouveau nom
-st.markdown("<h1>💎 NEXA<br><span style='font-size: 1.2rem; font-weight:400; color:#666;'>Reputation Intelligence</span></h1>", unsafe_allow_html=True)
+# En-tête simplifié et centré
+st.markdown("<h1>💎 NEXA</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #888; margin-bottom: 30px;'>Intelligence Artificielle de Réputation</p>", unsafe_allow_html=True)
 
-# Petit message de bienvenue discret
-st.toast("✅ Connecté à l'espace sécurisé.", icon="🔒")
-
-st.subheader("1️⃣ L'avis client reçu")
+# Zone de l'avis (Plus grande pour combler le vide)
+st.markdown("### 1️⃣ L'avis à traiter")
 avis_client = st.text_area(
-    "Collez le texte de l'avis ici :", 
-    height=120, 
-    placeholder="Exemple : 'Service impeccable et plats délicieux, mais un peu bruyant samedi soir...'"
+    label="Avis",
+    label_visibility="collapsed", # On cache le label standard pour faire plus propre
+    height=180, # Plus haut pour remplir l'espace
+    placeholder="Copiez-collez l'avis du client ici..."
 )
 
-st.write("") # Petit espace
+st.write("") # Espaceur
 
+# Options en 2 colonnes
 col1, col2 = st.columns(2)
+
 with col1:
+    st.markdown("### 🎯 Ton de réponse")
     genre = st.selectbox(
-        "Ton de la réponse :", 
-        ["Professionnel & Concis", "Chaleureux & Empathique", "Commercial & Engageant", "Excuses Sincères & Résolution"]
+        "Ton",
+        ["Professionnel & Concis", "Chaleureux & Empathique", "Commercial & Vendeur", "Excuses & Résolution"],
+        label_visibility="collapsed"
     )
+
 with col2:
-    # J'ai changé le radio en selectbox pour que ce soit plus propre visuellement dans la carte
-    taille = st.selectbox("Longueur souhaitée :", ["Courte (1-2 phrases)", "Moyenne (3-4 phrases)", "Détaillée (5+ phrases)"])
+    st.markdown("### 📏 Longueur")
+    # Changement ici : Radio horizontal au lieu de Selectbox
+    taille = st.radio(
+        "Longueur",
+        ["Courte", "Moyenne", "Détaillée"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
 
-st.markdown("---") # Ligne de séparation subtile
-
-# --- GÉNÉRATION ---
-# Le bouton sera automatiquement stylisé par le CSS ci-dessus
-if st.button("✨ GÉNÉRER LA RÉPONSE PREMIUM"):
+# Bouton d'action
+if st.button("✨ GÉNÉRER LA RÉPONSE"):
     if not avis_client:
-        st.warning("⚠️ Veuillez coller un avis d'abord.")
+        st.warning("⚠️ L'avis est vide.")
     else:
         try:
-            # Modèle performant
             model = genai.GenerativeModel('gemini-1.5-flash')
-            
-            # Prompt optimisé pour un résultat pro
             prompt = f"""
-            Agis comme un expert en communication de crise et relation client pour une marque premium.
-            Rédige une réponse à cet avis Google.
-
-            Avis du client : "{avis_client}"
-            Ton à adopter : {genre}
+            Agis comme un expert relation client NEXA.
+            Avis : "{avis_client}"
+            Ton : {genre}
             Longueur : {taille}
-
-            Directives importantes :
-            - Ne mets JAMAIS de guillemets au début ou à la fin de la réponse.
-            - Sois direct, pertinent et professionnel.
-            - Si l'avis est négatif, remercie pour le retour et propose une solution sans être sur la défensive.
-            - Si l'avis est positif, remercie chaleureusement et invite à revenir.
+            Règle d'or : Pas de guillemets, direct, professionnel.
             """
             
-            # Spinner personnalisé
-            with st.spinner("🧠 L'IA NEXA analyse l'avis et rédige la réponse..."):
+            with st.spinner("Analyse en cours..."):
                 response = model.generate_content(prompt)
                 
-                st.success("✅ Réponse générée avec succès !")
-                st.subheader("Votre réponse prête à l'emploi :")
-                st.text_area(
-                    "Cliquez dedans puis Ctrl+A / Ctrl+C pour copier :", 
-                    value=response.text, 
-                    height=250
-                )
+                st.success("✅ Réponse générée")
+                st.text_area("Résultat :", value=response.text, height=250)
                 
         except Exception as e:
-            st.error(f"Une erreur technique est survenue : {e}")
+            st.error(f"Erreur : {e}")
