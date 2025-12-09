@@ -2,22 +2,27 @@ import streamlit as st
 import google.generativeai as genai
 import streamlit as st
 
+import streamlit as st
+
 # --- SÉCURITÉ : LE BRACELET VIP ---
-# Choisis un code compliqué ici (ne le donne à personne)
+# Ce code doit être IDENTIQUE à celui dans ton fichier index.html
 SECRET_TOKEN = "AZERTY_SUPER_SECRET_123" 
 
-# On regarde si le lien contient le token
+# On récupère les paramètres de l'URL
 query_params = st.query_params
 user_token = query_params.get("token", "")
 
-# Si le token n'est pas bon, on bloque tout !
+# Si le token n'est pas le bon, on bloque l'accès
 if user_token != SECRET_TOKEN:
     st.error("⛔ Accès refusé. Vous devez passer par le portail de connexion.")
-    st.link_button("Aller à la connexion", "https://micro-saas-google.web.app") # <-- Mets ton lien Firebase ici
-    st.stop() # Arrête le chargement du reste du code
+    # Mets ici le lien de ton site Firebase
+    st.link_button("Se connecter", "https://gen-lang-client-0236145808.web.app")
+    st.stop() # Arrête le chargement de la page
 
-# --- LA SUITE DE TON CODE NORMAL EST EN DESSOUS ---
-# st.title("Mon Super SaaS")...
+# --- TON CODE STREAMLIT CONTINUE EN DESSOUS ---
+# ...
+
+
 
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Repond'Avis Pro", page_icon="🔒")
@@ -98,4 +103,5 @@ if st.button("✨ GÉNÉRER LA RÉPONSE", type="primary", use_container_width=Tr
         except Exception as e:
             st.error(f"Erreur : {e}")
             
+
 
