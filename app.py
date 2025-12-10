@@ -185,7 +185,7 @@ if st.button("Générer la réponse"):
         st.warning("Veuillez saisir un avis.")
     else:
         try:
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-pro')
             prompt = f"""
             Agis en tant que service client professionnel.
             Avis client : "{avis_client}"
@@ -202,4 +202,5 @@ if st.button("Générer la réponse"):
                 
         except Exception as e:
             st.error(f"Erreur technique : {e}")
+
 
