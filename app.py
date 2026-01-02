@@ -32,15 +32,24 @@ corporate_css = """
 st.markdown(corporate_css, unsafe_allow_html=True)
 
 # --- SÉCURITÉ & IDENTIFICATION ---
-# On récupère l'email envoyé par le portail de connexion
+# --- SÉCURITÉ (Le "Videur") ---
+# 1. On définit le mot de passe secret (le même que dans index.html)
+SECRET_TOKEN = "AZERTY_SUPER_SECRET_123"
+
+# 2. On récupère les infos de l'URL
 query_params = st.query_params
-user_email = query_params.get("email", "invité") # Si pas d'email, on note "invité"
+token_recu = query_params.get("token", "")
+user_email = query_params.get("email", "Inconnu")
 
-if user_email == "invité":
-    st.warning("⚠️ Mode Invité (Non connecté). Vos données ne seront pas sécurisées.")
-else:
-    st.sidebar.success(f"👤 Connecté en tant que : {user_email}")
+# 3. VERIFICATION : Si le token n'est pas bon, on BLOQUE tout.
+if token_recu != SECRET_TOKEN:
+    st.error("⛔ Accès refusé. Vous devez passer par le portail de connexion.")
+    # On ajoute un bouton pour retourner au login (remplace par ton lien Firebase)
+    st.link_button("Aller à la connexion", "https://gen-lang-client-0236145808.web.app") 
+    st.stop() # Arrête le chargement de la page ici
 
+# 4. Si on est passé, on affiche l'utilisateur
+st.sidebar.success(f"👤 Connecté : {user_email}")
 # --- FIREBASE ---
 if not firebase_admin._apps:
     try:
