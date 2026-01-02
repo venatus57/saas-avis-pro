@@ -17,6 +17,11 @@ corporate_css = """
     .stApp {
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* Gris-Bleu Entreprise (plus neutre que le violet) */
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        /* CACHER TOUT L'INTERFACE STREAMLIT */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .stDeployButton {display:none;}
     }
 
     /* 2. CARTE CENTRALE (Style "Logiciel Bancaire") */
@@ -202,6 +207,7 @@ if st.button("Générer la réponse"):
                 
         except Exception as e:
             st.error(f"Erreur technique : {e}")
+
 
 
 
