@@ -151,7 +151,7 @@ if st.button("✨ ANALYSER & RÉPONDRE"):
             st.success("✅ Sauvegardé dans VOTRE espace personnel.")
 
         except Exception as e:
-        st.error(f"Erreur : {e}")
+            st.error(f"Erreur : {e}")
 
 # --- ONGLET 2 : HISTORIQUE FILTRÉ ---
 with tab2:
@@ -189,6 +189,7 @@ with tab2:
             
     except Exception as e:
         st.error(f"Erreur de chargement : {e}")
+
 
 
 
