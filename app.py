@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- CSS PERSONNALISÉ (DESIGN PRO) ---
+# --- CSS PERSONNALISÉ ---
 st.markdown("""
 <style>
     .stApp { background-color: #0E1117; color: #FAFAFA; }
@@ -24,12 +24,11 @@ st.markdown("""
     .conseil-box { background-color: #262730; color: #FFFFFF; padding: 20px; border-radius: 8px; border-left: 5px solid #4CAF50; margin: 20px 0; }
     .stButton>button { width: 100%; border-radius: 8px; height: 3em; background-color: #FF4B4B; color: white; font-weight: bold; border: none; }
     .stButton>button:hover { background-color: #FF2B2B; }
-    /* Style spécifique pour le bouton supprimer */
     .delete-btn { border: 1px solid #ff4b4b; color: #ff4b4b; background: transparent; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- CONNEXION FIREBASE BLINDÉE ---
+# --- CONNEXION FIREBASE ---
 if not firebase_admin._apps:
     try:
         key_dict = dict(st.secrets["firebase"])
@@ -43,19 +42,17 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
-# --- SÉCURITÉ MAXIMALE (PLUS DE TEST) ---
+# --- SÉCURITÉ (LOGIN OBLIGATOIRE) ---
 SECRET_TOKEN = "AZERTY_SUPER_SECRET_123"
 query_params = st.query_params
 token_recu = query_params.get("token", "")
 user_email = query_params.get("email", "Inconnu")
 
-# Vérification Stricte : Pas de token = Pas d'entrée.
 if token_recu != SECRET_TOKEN:
      st.markdown("# 🔒 Accès Refusé")
      st.error("Accès strictement interdit. Veuillez vous identifier.")
-     st.info("Redirection vers le portail de sécurité...")
      st.link_button("🔐 Se connecter au portail", "https://gen-lang-client-0236145808.web.app") 
-     st.stop() # Le script s'arrête ici si on n'est pas connecté.
+     st.stop()
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -63,10 +60,9 @@ with st.sidebar:
     st.caption("Intelligence Artificielle")
     st.markdown("---")
     st.write(f"👤 **{user_email}**")
-    st.success("🟢 Sécurisé")
+    st.success("🟢 Espace Privé")
     st.markdown("---")
     if st.button("Déconnexion"):
-        # On renvoie vers le login sans token
         st.link_button("Quitter", "https://gen-lang-client-0236145808.web.app")
 
 # --- CORPS PRINCIPAL ---
@@ -74,7 +70,7 @@ st.title("Gestionnaire d'E-Réputation")
 st.markdown("#### *Transformez vos avis clients en opportunités.*")
 st.markdown("---")
 
-tab1, tab2 = st.tabs(["📝 Traitement des Avis", "📊 Historique Complet"])
+tab1, tab2 = st.tabs(["📝 Traitement des Avis", "📊 Historique Personnel"])
 
 # --- ONGLET 1 : TRAITEMENT ---
 with tab1:
@@ -131,7 +127,7 @@ with tab1:
                     except:
                         sentiment = "Neutre"; conseil = "Vérifier manuellement"; reponse_finale = text
 
-                    # Sauvegarde BDD
+                    # Sauvegarde BDD (Avec l'email pour le filtrage !)
                     db.collection("historique_avis").add({
                         "email_client": user_email,
                         "avis_original": avis_client,
@@ -154,45 +150,44 @@ with tab1:
                 
                 st.markdown("##### ✍️ Réponse")
                 st.text_area("À copier :", value=reponse_finale, height=200)
-                st.success("✅ Sauvegardé.")
+                st.success("✅ Sauvegardé dans VOTRE espace.")
 
             except Exception as e:
                 st.error(f"Erreur : {e}")
 
-# --- ONGLET 2 : HISTORIQUE (Avec Suppression) ---
+# --- ONGLET 2 : HISTORIQUE FILTRÉ (La Correction est ici) ---
 with tab2:
-    st.header("📂 Vos Archives")
+    st.header("📂 Vos Archives Personnelles")
     
-    if st.button("🔄 Actualiser la liste"):
+    if st.button("🔄 Actualiser"):
         st.rerun()
 
     try:
-        # Récupération des avis
-        docs = db.collection("historique_avis").stream()
+        # --- CORRECTIF SECURITÉ ---
+        # Au lieu de tout prendre, on filtre : WHERE email_client == user_email
+        docs = db.collection("historique_avis").where("email_client", "==", user_email).stream()
         
         liste_avis = []
         for doc in docs:
             avis_data = doc.to_dict()
-            avis_data['id'] = doc.id # On garde l'ID pour pouvoir supprimer
+            avis_data['id'] = doc.id
             liste_avis.append(avis_data)
         
         if not liste_avis:
-            st.info("📭 Aucun historique trouvé.")
+            st.info(f"📭 Aucun historique trouvé pour {user_email}.")
         else:
-            # Tri du plus récent au plus ancien (Si la date existe)
+            # Tri en Python pour éviter les erreurs d'index Firestore
             try:
                 liste_avis.sort(key=lambda x: x.get('date', datetime.datetime.now()), reverse=True)
             except:
-                liste_avis.reverse() # Fallback si problème de date
+                liste_avis.reverse()
             
             for avis in liste_avis:
                 # Titre de l'accordéon
                 date_obj = avis.get('date')
                 date_str = "Date inconnue"
-                if date_obj:
-                    # Conversion timestamp Firestore -> datetime Python si besoin
-                    if hasattr(date_obj, 'strftime'):
-                        date_str = date_obj.strftime("%d/%m/%Y à %H:%M")
+                if date_obj and hasattr(date_obj, 'strftime'):
+                    date_str = date_obj.strftime("%d/%m/%Y à %H:%M")
                 
                 titre = f"{date_str} - {avis.get('sentiment', 'Analyse')}"
                 
@@ -200,24 +195,19 @@ with tab2:
                     col_info, col_action = st.columns([3, 1])
                     
                     with col_info:
-                        st.caption(f"Client : {avis.get('email_client', 'Inconnu')}")
+                        st.caption(f"Propriétaire : {avis.get('email_client')}") # Devrait toujours être toi
                         st.markdown(f"**🗣️ Avis :** {avis.get('avis_original', '')}")
                         st.markdown(f"**✍️ Réponse :**")
                         st.code(avis.get('reponse_generee', ''), language=None)
                     
                     with col_action:
                         st.write("---")
-                        # BOUTON SUPPRIMER
-                        # On utilise une clé unique pour chaque bouton
                         if st.button("🗑️ Supprimer", key=f"del_{avis['id']}"):
-                            # 1. Suppression dans Firestore
                             db.collection("historique_avis").document(avis['id']).delete()
-                            # 2. Notification
-                            st.toast("✅ Avis supprimé définitivement !")
-                            # 3. Rechargement de la page pour mettre à jour la liste
+                            st.toast("✅ Supprimé !")
                             import time
-                            time.sleep(1) # Petite pause pour laisser le temps à Firestore
+                            time.sleep(1)
                             st.rerun()
 
     except Exception as e:
-        st.warning(f"Chargement de l'historique... (Si c'est la première fois, actualisez) : {e}")
+        st.warning(f"Erreur chargement : {e}")
