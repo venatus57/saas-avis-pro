@@ -92,7 +92,7 @@ if st.button("✨ ANALYSER & RÉPONDRE"):
     else:
         try:
             # 1. IA
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             
             prompt = f"""
             Rôle : Expert Service Client.
@@ -189,6 +189,7 @@ with tab2:
             
     except Exception as e:
         st.error(f"Erreur de chargement : {e}")
+
 
 
 
