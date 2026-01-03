@@ -92,7 +92,7 @@ with tab1:
         else:
             try:
                 # 1. IA
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 prompt = f"""
                 Agis comme un expert. Avis : "{avis_client}". Ton : {genre}.
                 Format : SENTIMENT: ... CONSEIL: ... REPONSE: ...
@@ -169,3 +169,4 @@ with tab2:
             
     except Exception as e:
         st.error(f"Erreur de chargement : {e}")
+
