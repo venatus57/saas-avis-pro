@@ -93,21 +93,22 @@ with tab1:
             try:
                 # 1. IA
                 model = genai.GenerativeModel('gemini-2.5-flash')
-                prompt = f"""
-                Agis comme un expert. Avis : "{avis_client}". Ton : {genre}.
-                Format : SENTIMENT: ... CONSEIL: ... REPONSE: ...
-                """
+               prompt = f"""
+                Rôle : Expert Service Client.
+                Avis client : "{avis_client}"
+                Ton à employer : {genre}
+                Longueur réponse : {taille}
                 
-                with st.spinner("🧠 Analyse en cours..."):
-                    response = model.generate_content(prompt)
-                    text = response.text
-                    try:
-                        sentiment = text.split("SENTIMENT:")[1].split("CONSEIL:")[0].strip()
-                        conseil = text.split("CONSEIL:")[1].split("REPONSE:")[0].strip()
-                        reponse_finale = text.split("REPONSE:")[1].strip()
-                    except:
-                        sentiment = "Neutre"; conseil = "Voir ci-dessous"; reponse_finale = text
-
+                Tes Consignes STRICTES :
+                1. SENTIMENT : Réponds par UN SEUL MOT (Positif, Négatif ou Neutre).
+                2. CONSEIL : Une seule phrase très courte et actionnable (max 15 mots) pour le gérant.
+                3. REPONSE : Rédige uniquement la réponse destinée au client (sans guillemets, sans intro).
+                
+                Format de sortie OBLIGATOIRE :
+                SENTIMENT: ...
+                CONSEIL: ...
+                REPONSE: ...
+                """
                     # 2. SAUVEGARDE SÉCURISÉE (Avec l'email !)
                     db.collection("historique_avis").add({
                         "email_client": user_email,  # <--- C'est ici que la magie opère
@@ -169,4 +170,5 @@ with tab2:
             
     except Exception as e:
         st.error(f"Erreur de chargement : {e}")
+
 
