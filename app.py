@@ -61,7 +61,7 @@ if token_recu != SECRET_TOKEN:
      st.error("Vous n'avez pas l'autorisation d'accéder à cette application directement.")
      st.info("Veuillez vous connecter via notre portail sécurisé.")
      # Remplace par ton VRAI lien de connexion Firebase ci-dessous
-     st.link_button("🔐 Se connecter", "https://saas-avis-login.web.app") 
+     st.link_button("🔐 Se connecter", "https://gen-lang-client-0236145808.web.app") 
      st.stop() # ARRET TOTAL DU SCRIPT ICI
 
 # --- SIDEBAR ---
@@ -164,4 +164,5 @@ with tab1:
 
 with tab2:
     st.write("Historique à venir...")
+
 
