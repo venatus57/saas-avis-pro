@@ -86,72 +86,72 @@ with tab1:
 
     st.write("") 
 
-   if st.button("✨ ANALYSER & RÉPONDRE"):
-        if not avis_client:
-            st.warning("⚠️ L'avis est vide.")
-        else:
-            try:
-                # 1. IA
-                model = genai.GenerativeModel('gemini-1.5-flash')
+if st.button("✨ ANALYSER & RÉPONDRE"):
+    if not avis_client:
+        st.warning("⚠️ L'avis est vide.")
+    else:
+        try:
+            # 1. IA
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            
+            prompt = f"""
+            Rôle : Expert Service Client.
+            Avis client : "{avis_client}"
+            Ton à employer : {genre}
+            Longueur réponse : {taille}
+            
+            Tes Consignes STRICTES :
+            1. SENTIMENT : Réponds par UN SEUL MOT (Positif, Négatif ou Neutre).
+            2. CONSEIL : Une seule phrase très courte et actionnable (max 15 mots) pour le gérant.
+            3. REPONSE : Rédige uniquement la réponse destinée au client (sans guillemets, sans intro).
+            
+            Format de sortie OBLIGATOIRE :
+            SENTIMENT: ...
+            CONSEIL: ...
+            REPONSE: ...
+            """
+            
+            with st.spinner("🧠 Analyse en cours..."):
+                response = model.generate_content(prompt)
+                text = response.text
                 
-                prompt = f"""
-                Rôle : Expert Service Client.
-                Avis client : "{avis_client}"
-                Ton à employer : {genre}
-                Longueur réponse : {taille}
-                
-                Tes Consignes STRICTES :
-                1. SENTIMENT : Réponds par UN SEUL MOT (Positif, Négatif ou Neutre).
-                2. CONSEIL : Une seule phrase très courte et actionnable (max 15 mots) pour le gérant.
-                3. REPONSE : Rédige uniquement la réponse destinée au client (sans guillemets, sans intro).
-                
-                Format de sortie OBLIGATOIRE :
-                SENTIMENT: ...
-                CONSEIL: ...
-                REPONSE: ...
-                """
-                
-                with st.spinner("🧠 Analyse en cours..."):
-                    response = model.generate_content(prompt)
-                    text = response.text
-                    
-                    # Parsing
-                    try:
-                        sentiment = text.split("SENTIMENT:")[1].split("CONSEIL:")[0].strip()
-                        conseil = text.split("CONSEIL:")[1].split("REPONSE:")[0].strip()
-                        reponse_finale = text.split("REPONSE:")[1].strip()
-                    except:
-                        sentiment = "Neutre"
-                        conseil = "Voir ci-dessous"
-                        reponse_finale = text
+                # Parsing
+                try:
+                    sentiment = text.split("SENTIMENT:")[1].split("CONSEIL:")[0].strip()
+                    conseil = text.split("CONSEIL:")[1].split("REPONSE:")[0].strip()
+                    reponse_finale = text.split("REPONSE:")[1].strip()
+                except:
+                    sentiment = "Neutre"
+                    conseil = "Voir ci-dessous"
+                    reponse_finale = text
 
-                    # 2. SAUVEGARDE (C'est ici que ça plantait, maintenant c'est aligné)
-                    db.collection("historique_avis").add({
-                        "email_client": user_email,
-                        "avis_original": avis_client,
-                        "reponse_generee": reponse_finale,
-                        "sentiment": sentiment,
-                        "conseil": conseil,
-                        "date": firestore.SERVER_TIMESTAMP,
-                        "ton": genre
-                    })
+                # 2. SAUVEGARDE (C'est ici que ça plantait, maintenant c'est aligné)
+                db.collection("historique_avis").add({
+                    "email_client": user_email,
+                    "avis_original": avis_client,
+                    "reponse_generee": reponse_finale,
+                    "sentiment": sentiment,
+                    "conseil": conseil,
+                    "date": firestore.SERVER_TIMESTAMP,
+                    "ton": genre
+                })
 
-                # AFFICHAGE
-                st.markdown("---")
-                if "POSITIF" in sentiment.upper(): 
-                    st.markdown(f'<div class="sentiment-box positif">😊 {sentiment}</div>', unsafe_allow_html=True)
-                elif "NÉGATIF" in sentiment.upper(): 
-                    st.markdown(f'<div class="sentiment-box negatif">😡 {sentiment}</div>', unsafe_allow_html=True)
-                else: 
-                    st.markdown(f'<div class="sentiment-box neutre">😐 {sentiment}</div>', unsafe_allow_html=True)
+            # AFFICHAGE
+            st.markdown("---")
+            if "POSITIF" in sentiment.upper(): 
+                st.markdown(f'<div class="sentiment-box positif">😊 {sentiment}</div>', unsafe_allow_html=True)
+            elif "NÉGATIF" in sentiment.upper(): 
+                st.markdown(f'<div class="sentiment-box negatif">😡 {sentiment}</div>', unsafe_allow_html=True)
+            else: 
+                st.markdown(f'<div class="sentiment-box neutre">😐 {sentiment}</div>', unsafe_allow_html=True)
 
-                st.markdown(f'<div class="conseil-box">💡 <b>Conseil :</b> {conseil}</div>', unsafe_allow_html=True)
-                st.subheader("✍️ Réponse :")
-                st.text_area("Résultat", value=reponse_finale, height=200)
-                st.success("✅ Sauvegardé dans VOTRE espace personnel.")
+            st.markdown(f'<div class="conseil-box">💡 <b>Conseil :</b> {conseil}</div>', unsafe_allow_html=True)
+            st.subheader("✍️ Réponse :")
+            st.text_area("Résultat", value=reponse_finale, height=200)
+            st.success("✅ Sauvegardé dans VOTRE espace personnel.")
 
-            except Exception as e:
-                st.error(f"Erreur : {e}")
+        except Exception as e:
+        st.error(f"Erreur : {e}")
 
 # --- ONGLET 2 : HISTORIQUE FILTRÉ ---
 with tab2:
@@ -189,6 +189,7 @@ with tab2:
             
     except Exception as e:
         st.error(f"Erreur de chargement : {e}")
+
 
 
 
