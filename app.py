@@ -48,19 +48,21 @@ if not firebase_admin._apps:
 db = firestore.client()
 
 # --- SÉCURITÉ ---
+# --- SÉCURITÉ (MODE STRICT) ---
 SECRET_TOKEN = "AZERTY_SUPER_SECRET_123"
 query_params = st.query_params
 token_recu = query_params.get("token", "")
-user_email = query_params.get("email", "Utilisateur Test")
+user_email = query_params.get("email", "Inconnu")
 
-# En prod, on bloque si pas de token (sauf si c'est toi qui teste)
-if token_recu != SECRET_TOKEN and user_email == "Utilisateur Test":
-    pass 
-elif token_recu != SECRET_TOKEN:
-     st.markdown("# 🔒 Accès Sécurisé Nécessaire")
-     st.error("Veuillez passer par le portail de connexion.")
-     st.link_button("Aller au portail", "https://saas-avis-login.web.app") 
-     st.stop()
+# Si le token n'est pas le bon, ON BLOQUE TOUT LE MONDE (Même toi si tu n'as pas le token)
+if token_recu != SECRET_TOKEN:
+     st.empty() # On vide l'écran
+     st.markdown("# 🔒 Accès Refusé")
+     st.error("Vous n'avez pas l'autorisation d'accéder à cette application directement.")
+     st.info("Veuillez vous connecter via notre portail sécurisé.")
+     # Remplace par ton VRAI lien de connexion Firebase ci-dessous
+     st.link_button("🔐 Se connecter", "https://saas-avis-login.web.app") 
+     st.stop() # ARRET TOTAL DU SCRIPT ICI
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -162,3 +164,4 @@ with tab1:
 
 with tab2:
     st.write("Historique à venir...")
+
