@@ -26,15 +26,25 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- CONNEXION FIREBASE (C'est ici que j'ai corrigé l'erreur) ---
-# On vérifie si l'app est déjà chargée pour éviter les doublons
+# --- CONNEXION FIREBASE (CORRECTIF BLINDÉ) ---
 if not firebase_admin._apps:
-    # On récupère les infos secrètes stockées sur Streamlit Cloud
-    key_dict = st.secrets["firebase"]
-    cred = credentials.Certificate(key_dict)
-    firebase_admin.initialize_app(cred)
+    try:
+        # 1. On force la conversion en vrai dictionnaire (pour éviter l'erreur ValueError)
+        key_dict = dict(st.secrets["firebase"])
+        
+        # 2. On répare la clé privée si elle contient des retours à la ligne cassés
+        # (C'est souvent ça qui plante sur le Cloud)
+        if "private_key" in key_dict:
+            key_dict["private_key"] = key_dict["private_key"].replace("\\n", "\n")
 
-# On se connecte
+        # 3. On se connecte
+        cred = credentials.Certificate(key_dict)
+        firebase_admin.initialize_app(cred)
+    except Exception as e:
+        st.error(f"❌ Erreur critique de connexion Firebase : {e}")
+        st.stop()
+
+# On récupère le client Database
 db = firestore.client()
 
 # --- SÉCURITÉ ---
