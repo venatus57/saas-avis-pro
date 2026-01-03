@@ -86,13 +86,14 @@ with tab1:
 
     st.write("") 
 
-    if st.button("✨ ANALYSER & RÉPONDRE"):
+   if st.button("✨ ANALYSER & RÉPONDRE"):
         if not avis_client:
             st.warning("⚠️ L'avis est vide.")
         else:
             try:
                 # 1. IA
-                model = genai.GenerativeModel('gemini-2.5-flash')
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                
                 prompt = f"""
                 Rôle : Expert Service Client.
                 Avis client : "{avis_client}"
@@ -109,9 +110,24 @@ with tab1:
                 CONSEIL: ...
                 REPONSE: ...
                 """
-                    # 2. SAUVEGARDE SÉCURISÉE (Avec l'email !)
+                
+                with st.spinner("🧠 Analyse en cours..."):
+                    response = model.generate_content(prompt)
+                    text = response.text
+                    
+                    # Parsing
+                    try:
+                        sentiment = text.split("SENTIMENT:")[1].split("CONSEIL:")[0].strip()
+                        conseil = text.split("CONSEIL:")[1].split("REPONSE:")[0].strip()
+                        reponse_finale = text.split("REPONSE:")[1].strip()
+                    except:
+                        sentiment = "Neutre"
+                        conseil = "Voir ci-dessous"
+                        reponse_finale = text
+
+                    # 2. SAUVEGARDE (C'est ici que ça plantait, maintenant c'est aligné)
                     db.collection("historique_avis").add({
-                        "email_client": user_email,  # <--- C'est ici que la magie opère
+                        "email_client": user_email,
                         "avis_original": avis_client,
                         "reponse_generee": reponse_finale,
                         "sentiment": sentiment,
@@ -122,9 +138,12 @@ with tab1:
 
                 # AFFICHAGE
                 st.markdown("---")
-                if "POSITIF" in sentiment.upper(): st.markdown(f'<div class="sentiment-box positif">😊 {sentiment}</div>', unsafe_allow_html=True)
-                elif "NÉGATIF" in sentiment.upper(): st.markdown(f'<div class="sentiment-box negatif">😡 {sentiment}</div>', unsafe_allow_html=True)
-                else: st.markdown(f'<div class="sentiment-box neutre">😐 {sentiment}</div>', unsafe_allow_html=True)
+                if "POSITIF" in sentiment.upper(): 
+                    st.markdown(f'<div class="sentiment-box positif">😊 {sentiment}</div>', unsafe_allow_html=True)
+                elif "NÉGATIF" in sentiment.upper(): 
+                    st.markdown(f'<div class="sentiment-box negatif">😡 {sentiment}</div>', unsafe_allow_html=True)
+                else: 
+                    st.markdown(f'<div class="sentiment-box neutre">😐 {sentiment}</div>', unsafe_allow_html=True)
 
                 st.markdown(f'<div class="conseil-box">💡 <b>Conseil :</b> {conseil}</div>', unsafe_allow_html=True)
                 st.subheader("✍️ Réponse :")
@@ -170,6 +189,7 @@ with tab2:
             
     except Exception as e:
         st.error(f"Erreur de chargement : {e}")
+
 
 
 
